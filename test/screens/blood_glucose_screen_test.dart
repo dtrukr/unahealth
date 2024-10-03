@@ -1,18 +1,20 @@
-import 'package:blood_glucose_tracker/main.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:blood_glucose_tracker/screens/blood_glucose_screen.dart';
 
-class MockHttpClient extends Mock implements http.Client {}
+@GenerateMocks([http.Client])
+import 'blood_glucose_screen_test.mocks.dart';
 
 void main() {
   group('Blood Glucose Screen Widget Test', () {
     testWidgets('Renders Blood Glucose Screen and interacts with date pickers',
         (WidgetTester tester) async {
-      final mockHttpClient = MockHttpClient();
+      final mockHttpClient = MockClient();
 
       final mockResponseData = jsonEncode({
         'bloodGlucoseSamples': [
@@ -21,9 +23,14 @@ void main() {
         ]
       });
 
-      await tester.pumpWidget(MyApp());
+      when(mockHttpClient.get(any)).thenAnswer((_) async {
+        await Future.delayed(Duration(seconds: 2));
+        return http.Response(mockResponseData, 200);
+      });
 
-      await tester.pumpAndSettle();
+      await tester.pumpWidget(MaterialApp(
+        home: BloodGlucoseScreen(client: mockHttpClient),
+      ));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
 

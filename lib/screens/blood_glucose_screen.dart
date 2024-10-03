@@ -6,6 +6,10 @@ import 'package:fl_chart/fl_chart.dart';
 import '../models/blood_glucose_sample.dart';
 
 class BloodGlucoseScreen extends StatefulWidget {
+  final http.Client client;
+
+  BloodGlucoseScreen({Key? key, required this.client}) : super(key: key);
+
   @override
   _BloodGlucoseScreenState createState() => _BloodGlucoseScreenState();
 }
@@ -18,7 +22,7 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
   bool loading = false;
 
   Future<List<BloodGlucoseSample>> fetchBloodGlucoseData() async {
-    final response = await http.get(Uri.parse(
+    final response = await widget.client.get(Uri.parse(
         'https://s3-de-central.profitbricks.com/una-health-frontend-tech-challenge/sample.json'));
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
@@ -188,107 +192,106 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
       ),
       body: loading
           ? Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  samples.isEmpty
-                      ? Center(
-                          child: Text(
-                              'No data available for the selected date range. Available date range: $dateRange',
-                              style: TextStyle(color: Colors.grey.shade400, fontSize: 16)))
-                      : SizedBox(height: 250, child: buildChart()),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            icon: Icon(Icons.calendar_today, color: Colors.white),
-                            label: Text('Start Date', style: TextStyle(color: Colors.white)),
-                            onPressed: () async {
-                              DateTime? picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: startDate!,
-                                  firstDate: allSamples.first.timestamp,
-                                  lastDate: allSamples.last.timestamp,
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: Theme.of(context).copyWith(
-                                        colorScheme: ColorScheme.dark(
-                                          primary: Color(0xFF00D1FF),
-                                          surface: Color(0xFF1E1E2C),
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    samples.isEmpty
+                        ? Center(
+                            child: Text(
+                                'No data available for the selected date range. Available date range: $dateRange',
+                                style: TextStyle(color: Colors.grey.shade400, fontSize: 16)))
+                        : SizedBox(height: 250, child: buildChart()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: Icon(Icons.calendar_today, color: Colors.white),
+                              label: Text('Start Date', style: TextStyle(color: Colors.white)),
+                              onPressed: () async {
+                                DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: startDate!,
+                                    firstDate: allSamples.first.timestamp,
+                                    lastDate: allSamples.last.timestamp,
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: Theme.of(context).copyWith(
+                                          colorScheme: ColorScheme.dark(
+                                            primary: Color(0xFF00D1FF),
+                                            surface: Color(0xFF1E1E2C),
+                                          ),
                                         ),
-                                      ),
-                                      child: child!,
-                                    );
+                                        child: child!,
+                                      );
+                                    });
+                                if (picked != null) {
+                                  setState(() {
+                                    startDate = picked;
                                   });
-                              if (picked != null) {
-                                setState(() {
-                                  startDate = picked;
-                                });
-                                filterData();
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF00D1FF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                  filterData();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF00D1FF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            icon: Icon(Icons.calendar_today, color: Colors.white),
-                            label: Text('End Date', style: TextStyle(color: Colors.white)),
-                            onPressed: () async {
-                              DateTime? picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: endDate!,
-                                  firstDate: allSamples.first.timestamp,
-                                  lastDate: allSamples.last.timestamp,
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: Theme.of(context).copyWith(
-                                        colorScheme: ColorScheme.dark(
-                                          primary: Color(0xFF00D1FF),
-                                          surface: Color(0xFF1E1E2C),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: Icon(Icons.calendar_today, color: Colors.white),
+                              label: Text('End Date', style: TextStyle(color: Colors.white)),
+                              onPressed: () async {
+                                DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: endDate!,
+                                    firstDate: allSamples.first.timestamp,
+                                    lastDate: allSamples.last.timestamp,
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: Theme.of(context).copyWith(
+                                          colorScheme: ColorScheme.dark(
+                                            primary: Color(0xFF00D1FF),
+                                            surface: Color(0xFF1E1E2C),
+                                          ),
                                         ),
-                                      ),
-                                      child: child!,
-                                    );
+                                        child: child!,
+                                      );
+                                    });
+                                if (picked != null) {
+                                  setState(() {
+                                    endDate = picked;
                                   });
-                              if (picked != null) {
-                                setState(() {
-                                  endDate = picked;
-                                });
-                                filterData();
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF00D1FF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                  filterData();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF00D1FF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  if (samples.isNotEmpty)
-                    Text(
-                      'Statistics (${dateRange})',
-                      style:
-                          TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  Expanded(
-                    child: samples.isEmpty
-                        ? Container()
-                        : Column(
+                    if (samples.isNotEmpty)
+                      Text(
+                        'Statistics (${dateRange})',
+                        style: TextStyle(
+                            fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    samples.isNotEmpty
+                        ? Column(
                             children: [
                               Row(
                                 children: [
@@ -315,9 +318,10 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
                                 ],
                               ),
                             ],
-                          ),
-                  ),
-                ],
+                          )
+                        : Container(),
+                  ],
+                ),
               ),
             ),
     );

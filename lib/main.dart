@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'screens/blood_glucose_screen.dart';
 
 void main() {
@@ -22,7 +23,7 @@ class MyApp extends StatelessWidget {
           Theme.of(context).textTheme.apply(bodyColor: Colors.white),
         ),
       ),
-      home: BloodGlucoseScreen(),
+      home: BloodGlucoseScreen(client: http.Client()),
     );
   }
 }
