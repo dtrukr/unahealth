@@ -94,6 +94,13 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
         : (sortedValues[middle - 1] + sortedValues[middle]) / 2;
   }
 
+  String get dateRange {
+    if (samples.isEmpty) return '';
+    final start = DateFormat('MM/dd/yyyy').format(samples.first.timestamp);
+    final end = DateFormat('MM/dd/yyyy').format(samples.last.timestamp);
+    return '$start - $end';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -107,68 +114,74 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
   }
 
   Widget buildChart() {
-    return LineChart(
-      LineChartData(
-        backgroundColor: Color(0xFF2C2C40),
-        borderData: FlBorderData(show: true, border: Border.all(color: Color(0xFF3C3C56))),
-        gridData: FlGridData(
-          show: true,
-          getDrawingHorizontalLine: (value) => FlLine(color: Color(0xFF3C3C56), strokeWidth: 0.5),
-          getDrawingVerticalLine: (value) => FlLine(color: Color(0xFF3C3C56), strokeWidth: 0.5),
-        ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: samples
-                .map((sample) =>
-                    FlSpot(sample.timestamp.millisecondsSinceEpoch.toDouble(), sample.value))
-                .toList(),
-            isCurved: true,
-            color: Color(0xFF00D1FF),
-            barWidth: 3,
-            dotData: FlDotData(show: false),
-          ),
-        ],
-        titlesData: FlTitlesData(
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 35,
-              getTitlesWidget: (value, _) {
-                return Text(value.toStringAsFixed(1),
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 12));
-              },
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: (samples.isNotEmpty
-                      ? (samples.last.timestamp.millisecondsSinceEpoch -
-                              samples.first.timestamp.millisecondsSinceEpoch) /
-                          5
-                      : 1)
-                  .toDouble(),
-              getTitlesWidget: (value, _) {
-                final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
-
-                if (value == samples.first.timestamp.millisecondsSinceEpoch.toDouble() ||
-                    value == samples.last.timestamp.millisecondsSinceEpoch.toDouble()) {
-                  return Container();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    DateFormat('MM/dd').format(date),
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+    return samples.isEmpty
+        ? Center(
+            child: Text('No data available for the selected date range',
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 16)))
+        : LineChart(
+            LineChartData(
+              backgroundColor: Color(0xFF2C2C40),
+              borderData: FlBorderData(show: true, border: Border.all(color: Color(0xFF3C3C56))),
+              gridData: FlGridData(
+                show: true,
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: Color(0xFF3C3C56), strokeWidth: 0.5),
+                getDrawingVerticalLine: (value) =>
+                    FlLine(color: Color(0xFF3C3C56), strokeWidth: 0.5),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: samples
+                      .map((sample) =>
+                          FlSpot(sample.timestamp.millisecondsSinceEpoch.toDouble(), sample.value))
+                      .toList(),
+                  isCurved: true,
+                  color: Color(0xFF00D1FF),
+                  barWidth: 3,
+                  dotData: FlDotData(show: false),
+                ),
+              ],
+              titlesData: FlTitlesData(
+                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 35,
+                    getTitlesWidget: (value, _) {
+                      return Text(value.toStringAsFixed(1),
+                          style: TextStyle(color: Colors.grey.shade400, fontSize: 12));
+                    },
                   ),
-                );
-              },
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: (samples.isNotEmpty
+                            ? (samples.last.timestamp.millisecondsSinceEpoch -
+                                    samples.first.timestamp.millisecondsSinceEpoch) /
+                                5
+                            : 1)
+                        .toDouble(),
+                    getTitlesWidget: (value, _) {
+                      final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
+
+                      if (value == samples.first.timestamp.millisecondsSinceEpoch.toDouble() ||
+                          value == samples.last.timestamp.millisecondsSinceEpoch.toDouble()) {
+                        return Container();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          DateFormat('MM/dd').format(date),
+                          style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-    );
+          );
   }
 
   Widget buildStatCard(String label, String value, Color color) {
@@ -215,7 +228,11 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 250, child: buildChart()),
+                  samples.isEmpty
+                      ? Center(
+                          child: Text('No data available for the selected date range',
+                              style: TextStyle(color: Colors.grey.shade400, fontSize: 16)))
+                      : SizedBox(height: 250, child: buildChart()),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Row(
@@ -296,35 +313,43 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
                       ],
                     ),
                   ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: buildStatCard(
-                                  'Minimum', minValue.toStringAsFixed(2), Colors.greenAccent),
-                            ),
-                            Expanded(
-                              child: buildStatCard(
-                                  'Maximum', maxValue.toStringAsFixed(2), Colors.redAccent),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: buildStatCard(
-                                  'Average', averageValue.toStringAsFixed(2), Colors.blueAccent),
-                            ),
-                            Expanded(
-                              child: buildStatCard(
-                                  'Median', medianValue.toStringAsFixed(2), Colors.purpleAccent),
-                            ),
-                          ],
-                        ),
-                      ],
+                  if (samples.isNotEmpty)
+                    Text(
+                      'Statistics (${dateRange})',
+                      style:
+                          TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
                     ),
+                  Expanded(
+                    child: samples.isEmpty
+                        ? Container()
+                        : Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: buildStatCard(
+                                        'Minimum', minValue.toStringAsFixed(2), Colors.greenAccent),
+                                  ),
+                                  Expanded(
+                                    child: buildStatCard(
+                                        'Maximum', maxValue.toStringAsFixed(2), Colors.redAccent),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: buildStatCard('Average', averageValue.toStringAsFixed(2),
+                                        Colors.blueAccent),
+                                  ),
+                                  Expanded(
+                                    child: buildStatCard('Median', medianValue.toStringAsFixed(2),
+                                        Colors.purpleAccent),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                   ),
                 ],
               ),
