@@ -129,6 +129,7 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
           ),
         ],
         titlesData: FlTitlesData(
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -142,10 +143,26 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              interval: (samples.isNotEmpty
+                      ? (samples.last.timestamp.millisecondsSinceEpoch -
+                              samples.first.timestamp.millisecondsSinceEpoch) /
+                          5
+                      : 1)
+                  .toDouble(),
               getTitlesWidget: (value, _) {
                 final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
-                return Text(DateFormat('MM/dd').format(date),
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 12));
+
+                if (value == samples.first.timestamp.millisecondsSinceEpoch.toDouble() ||
+                    value == samples.last.timestamp.millisecondsSinceEpoch.toDouble()) {
+                  return Container();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    DateFormat('MM/dd').format(date),
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                  ),
+                );
               },
             ),
           ),
@@ -280,14 +297,32 @@ class _BloodGlucoseScreenState extends State<BloodGlucoseScreen> {
                     ),
                   ),
                   Expanded(
-                    child: ListView(
+                    child: Column(
                       children: [
-                        buildStatCard('Minimum', minValue.toStringAsFixed(2), Colors.greenAccent),
-                        buildStatCard('Maximum', maxValue.toStringAsFixed(2), Colors.redAccent),
-                        buildStatCard(
-                            'Average', averageValue.toStringAsFixed(2), Colors.blueAccent),
-                        buildStatCard(
-                            'Median', medianValue.toStringAsFixed(2), Colors.purpleAccent),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: buildStatCard(
+                                  'Minimum', minValue.toStringAsFixed(2), Colors.greenAccent),
+                            ),
+                            Expanded(
+                              child: buildStatCard(
+                                  'Maximum', maxValue.toStringAsFixed(2), Colors.redAccent),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: buildStatCard(
+                                  'Average', averageValue.toStringAsFixed(2), Colors.blueAccent),
+                            ),
+                            Expanded(
+                              child: buildStatCard(
+                                  'Median', medianValue.toStringAsFixed(2), Colors.purpleAccent),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
